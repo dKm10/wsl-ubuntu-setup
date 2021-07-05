@@ -1,0 +1,114 @@
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+  - name: Add gpg keys
+    become: yes
+    apt_key:
+      url: "{{ item.url }}"
+      keyring: /etc/apt/trusted.gpg.d/{{ item.keyring }}
+      state: present
+    loop:
+      - {
+          url: "https://cli.github.com/packages/githubcli-archive-keyring.gpg",
+          keyring: githubcli-archive-keyring.gpg
+        }
+      - {
+          url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key",
+          keyring: nodejs-keyring.gpg
+        }
+      - {
+          url: "https://apt.releases.hashicorp.com/gpg",
+          keyring: terraform-ls-keyring.gpg
+        }
+      
+  - name: Add package repo
+    become: yes
+    apt_repository:
+      repo: "{{ item.repo }}"
+      state: present
+      filename: "{{ item.file }}"
+    loop:
+      - {
+          repo: "deb https://cli.github.com/packages stable main",
+          file: cli.github
+        }
+      - {
+          repo: "deb https://deb.nodesource.com/node_12.x focal main",
+          file: nodejs
+        }
+      - {
+          repo: "ppa:jonathonf/vim",
+          file: jonathanf.vim
+        }
+      - {
+          repo: "deb https://apt.releases.hashicorp.com focal main",
+          file: terraform-ls
+        }
+
+  - name: Install packages
+    become: yes
+    apt:
+      name:
+      - gh
+      - zsh
+      - nodejs
+      - tree
+      - unzip
+      - terraform-ls
+      state: present
+      update_cache: yes
+
+  - name: Update vim
+    become: yes
+    apt:
+      name: vim
+      state: latest
+      update_cache: yes
+
+  - name: Create directories
+    file:
+      path: "{{ item }}"
+      state: directory
+    loop:
+      - "$HOME/tfe"
+      - "$HOME/tfebinaries"
+      - "$HOME/.vim"
+      - "$HOME/.terraform.d"
+
+  - name: Check P10k directory
+    stat:
+      path: ~/powerlevel10k
+    register: p10k_directory
+
+  - name: Clone P10k theme
+    shell: git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
+    when: p10k_directory.stat.exists == false
+
+  - name: Copy configuration files ( dont't overwrite)
+    copy:
+      src: config-files/{{ item }}
+      dest: $HOME/.{{ item }}
+      force: no
+    loop:
+      - bash_aliases
+      - zshrc
+      - vimrc
+      - p10k.zsh
+      - gitconfig
+      - tfe_versions
+      - hush_login
+
+  - name: Add tfe folder to path
+    lineinfile:
+      path: ~/.profile
+      line: PATH=$HOME/tfe:$PATH
+      state: present
+
+  - name: Add vim plugin manager
+    copy:
+      src: config-files/vim/
+      dest: $HOME/.vim
+      force: no
+
