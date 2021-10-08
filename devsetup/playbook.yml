@@ -98,7 +98,7 @@
       - p10k.zsh
       - gitconfig
       - tfe_versions
-      - hush_login
+      - hushlogin
 
   - name: Add tfe folder to path
     lineinfile:
