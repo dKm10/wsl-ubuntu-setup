@@ -22,6 +22,10 @@
           url: "https://apt.releases.hashicorp.com/gpg",
           keyring: terraform-ls-keyring.gpg
         }
+      - {
+          url: "https://packages.microsoft.com/keys/microsoft.asc",
+          keyring: microsoft.gpg
+        }
       
   - name: Add package repo
     become: yes
@@ -46,6 +50,10 @@
           repo: "deb https://apt.releases.hashicorp.com focal main",
           file: terraform-ls
         }
+      - {
+          repo: "deb https://packages.microsoft.com/repos/azure-cli focal main",
+          file: azure.cli
+        }
 
   - name: Install packages
     become: yes
@@ -57,6 +65,7 @@
       - tree
       - unzip
       - terraform-ls
+      - azure-cli
       state: present
       update_cache: yes
 
